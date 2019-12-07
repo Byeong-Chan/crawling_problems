@@ -1,0 +1,12 @@
+{
+  "name": "crawling",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./crawling"
+  },
+  "dependencies": {
+    "crawler": "^1.2.1",
+    "mongoose": "^5.7.13"
+  }
+}
