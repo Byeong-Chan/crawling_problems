@@ -390,11 +390,13 @@ const b = new Crawler({
 
 
 db.once('open', () => {
-    idxb = -1;
-    counter = 0;
-    funboj(b).catch(err => {
-        console.log(err);
-    });
+    setInterval(() => {
+        idxb = -1;
+        counter = 0;
+        funboj(b).catch(err => {
+            console.log(err);
+        });
+    }, 86400000);
 
     setInterval(() => {
         idxs = -1;
