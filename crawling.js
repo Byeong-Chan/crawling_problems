@@ -37,23 +37,38 @@ const funspoj = async function(s) {
 
 
 let idxb_categroy = 0;
+let pageb_category = 0;
 const funboj_category = async function(b_category) {
-    idxb_categroy += 1;
-    b_category.queue(`https://solved.ac/problems/algorithms/${idxb_categroy}`);
+    pageb_category += 1;
+    if(pageb_category === 9) {
+        pageb_category = 1;
+        idxb_categroy += 1;
+    }
+    b_category.queue(`https://solved.ac/problems/algorithms/${idxb_categroy}?page=${pageb_category}`);
 };
 
 
 
 
 let idxb = -1;
+let pageb = 0;
 const funboj = async function(b, b_category) {
-    idxb += 1;
+    pageb += 1;
+    if(pageb === 101) {
+        pageb = 1;
+        idxb += 1;
+    }
+    if(pageb === 8 && idxb !== 0) {
+        pageb = 1;
+        idxb += 1;
+    }
     if(idxb < 31) {
-        b.queue(`https://solved.ac/problems/level/${idxb}`);
+        b.queue(`https://solved.ac/problems/level/${idxb}?page=${pageb}`);
     }
     else {
+        pageb_category = 8;
         idxb_categroy = 0;
-        funboj_category(b_category);
+        funboj_category(b_category).catch(err => { console.log(err); });
     }
 };
 
@@ -391,6 +406,7 @@ const b = new Crawler({
 
 db.once('open', () => {
     setInterval(() => {
+        pageb = 100;
         idxb = -1;
         counter = 0;
         funboj(b).catch(err => {
