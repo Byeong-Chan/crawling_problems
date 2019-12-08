@@ -313,7 +313,7 @@ const b_category = new Crawler({
                         }
                     });
                     if(obj.name !== '') {
-                        obj.problem_number = 'BOJ/' + obj.problem_number;
+                        obj.problem_number = 'boj/' + obj.problem_number;
                         arr.push(obj);
                     }
                 });
@@ -370,7 +370,7 @@ const b = new Crawler({
                     }
                 });
                 if(obj.name !== '') {
-                    obj.problem_number = 'BOJ/' + obj.problem_number;
+                    obj.problem_number = 'boj/' + obj.problem_number;
                     arr.push(obj);
                 }
             });
