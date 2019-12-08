@@ -132,7 +132,7 @@ const c = new Crawler({
 
                     }).catch(err => {
                     });
-                    model.outProblem.findOneAndUpdate({name: arr[i].name},
+                    model.outProblem.findOneAndUpdate({problem_number: arr[i].problem_number},
                         {$set: {problem_solver: arr[i].problem_solver,
                                 problem_rating: arr[i].problem_rating,
                                 Category: arr[i].Category
@@ -241,7 +241,7 @@ const s = new Crawler({
 
                         });
 
-                        model.outProblem.findOneAndUpdate({name: arr[stag_idx].name},
+                        model.outProblem.findOneAndUpdate({problem_number: arr[stag_idx].problem_number},
                             {$set: {problem_solver: arr[stag_idx].problem_solver,
                                     problem_rating: arr[stag_idx].problem_rating,
                                     Category: arr[stag_idx].Category
