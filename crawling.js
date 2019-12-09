@@ -13,6 +13,41 @@ db.on('error', console.error);
 const model = require('./model');
 const Crawler = require('crawler');
 
+let qidx = 0;
+const queue = [];
+
+const insertMongo = async function() {
+    qidx++;
+    const obj = queue[qidx - 1];
+    model.outProblem.create(obj).then(result => {
+        if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
+    }).catch(err => {
+        console.log(err);
+        model.outProblem.updateOne({problem_number: obj.problem_number},
+            {
+                $set: {
+                    problem_solver: obj.problem_solver,
+                    problem_rating: obj.problem_rating,
+                    Category: obj.Category
+                }
+            }).then(result=> {
+            if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
+        }).catch(err =>{
+            console.log(err);
+            if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
+        })
+    })
+};
+
+const queueing = async function(obj) {
+    if(queue.length === qidx) {
+        queue.push(obj);
+        return insertMongo();
+    }
+    else {
+        queue.push(obj);
+    }
+};
 
 
 const prev = [];
@@ -85,54 +120,38 @@ const c = new Crawler({
         }else{
             const $ = res.$;
 
-            let obj = {
-                name: '',
-                problem_number: '',
-                Category: [],
-                problem_solver: 0,
-                problem_rating: 0
-            };
-            let cnt = 0;
             const arr = [];
-            $(".problems td").each(function (idx) {
-                $(this).find(".ProblemRating").each(function (idx) {
-                    if ($(this).text().trim() === '') return;
-                    // 문제 레이팅
-                    if ($(this).text().trim().length > 0) {
-                        obj.problem_rating = parseInt($(this).text().trim());
+            $(".problems tr").each(function (idx) {
+                if(idx === 0) return;
+                const obj = {
+                    name: '',
+                    problem_number: '',
+                    Category: [],
+                    problem_solver: 0,
+                    problem_rating: 0
+                };
+                $(this).find('td').each(function(idx) {
+                    if(idx === 1) {
+                        $(this).find('a').each(function(idx) {
+                            if(idx === 0) {
+                                obj.name = $(this).text().trim();
+                            }
+                            else {
+                                obj.Category.push($(this).text().trim());
+                            }
+                        });
+                        return;
+                    }
+                    if(idx === 0) obj.problem_number = 'codeforces/' + $(this).text().trim();
+                    if(idx === 3) {
+                        if($(this).text().trim() !== '') obj.problem_rating = parseInt($(this).text().trim());
+                    }
+                    if(idx === 4) {
+                        if($(this).text().trim() !== '') obj.problem_solver = parseInt($(this).text().trim().substring(1));
                     }
                 });
-
-                $(this).find("a").each(function (idx) {
-                    if ($(this).text().trim() === '') return;
-                    if ($(this)[0].attribs.class === 'notice') {
-                        // 카테고리
-                        obj.Category.push($(this).text().trim());
-                    }
-                    else if ($(this)[0].attribs.title === 'Participants solved the problem') {
-                        // 푼 사람 수
-                        if($(this).text().trim().length > 0)
-                            obj.problem_solver = parseInt($(this).text().trim().substring(1));
-                    }
-                    else if ($(this)[0].attribs.title !== 'Participants solved the problem') {
-                        if(cnt === 0) {
-                            obj.problem_number = "codeforces/" + obj.problem_number;
-                            if(obj.name !== '') arr.push(obj);
-                            obj = {
-                                name: '',
-                                problem_number: '',
-                                Category: [],
-                                problem_solver: 0,
-                                problem_rating: 0
-                            };
-                        }
-                        if(cnt === 0) obj.problem_number = $(this).text().trim();
-                        else obj.name = $(this).text().trim();
-                        cnt = (cnt + 1) % 2;
-                    }
-                });
+                arr.push(obj);
             });
-            if(obj.name !== '') arr.push(obj);
 
             if(prev.length > 0 && arr.length > 0 && prev[0].problem_number === arr[0].problem_number) {
                 // 멈춰!
@@ -143,24 +162,17 @@ const c = new Crawler({
             else {
                 console.log("Codeforces " + idxc + " " + arr.length);
                 for(let i = 0; i < arr.length; i++) {
-                    model.outProblem.create(arr[i]).then(result => {
+                    queueing(arr[i]).catch(err => {console.log(err)});
+                }
 
-                    }).catch(err => {
-                    });
-                    model.outProblem.findOneAndUpdate({problem_number: arr[i].problem_number},
-                        {$set: {problem_solver: arr[i].problem_solver,
-                                problem_rating: arr[i].problem_rating,
-                                Category: arr[i].Category
-                            }}).then(result => {}).catch(err => {});
+                prev.splice(0,prev.length);
+                for(let i = 0; i < arr.length; i++) {
+                    prev.push(arr[i]);
                 }
 
                 funcodeforces(c).catch(err => {
                     console.log(err);
                 });
-            }
-            prev.splice(0,prev.length);
-            for(let i = 0; i < arr.length; i++) {
-                prev.push(arr[i]);
             }
         }
         done();
@@ -250,20 +262,11 @@ const s = new Crawler({
                             });
                         }
                         prevs.push(arr[stag_idx]);
-                        model.outProblem.create(arr[stag_idx]).then(result => {
 
-                        }).catch(err => {
-
-                        });
-
-                        model.outProblem.findOneAndUpdate({problem_number: arr[stag_idx].problem_number},
-                            {$set: {problem_solver: arr[stag_idx].problem_solver,
-                                    problem_rating: arr[stag_idx].problem_rating,
-                                    Category: arr[stag_idx].Category
-                                }}).then(result => {}).catch(err => {});
+                        queueing(arr[stag_idx]).catch(err => {console.log(err)});
 
                         funcstag(stag).catch(err => {
-                            console.log(err);
+
                         });
                         done();
                     }
@@ -299,7 +302,7 @@ const b_category = new Crawler({
             }
             if(category_name !== '') {
                 counter = 0;
-                console.log('BOJ Category ' + idxb_categroy + ' ' + category_name);
+                console.log('BOJ Category ' + idxb_categroy + ' ' + category_name + ' ' + pageb_category);
 
                 const arr = [];
                 $('.problem_list tr').each(function(idx) {
@@ -334,9 +337,7 @@ const b_category = new Crawler({
                 });
 
                 for(let i = 0; i < arr.length; i++) {
-                    model.outProblem.create(arr[i]).then(result => {}).catch(err => {});
-                    model.outProblem.findOneAndUpdate({problem_number: arr[i].problem_number},
-                        {$addToSet: {Category: category_name}}).then(result => {}).catch(err => {});
+                    queueing(arr[i]).catch(err => {console.log(err)});
                 }
 
                 funboj_category(b_category).catch(err => {
@@ -357,7 +358,7 @@ const b = new Crawler({
             console.log(error);
         } else {
             const $ = res.$;
-            console.log('BOJ ' + idxb);
+            console.log('BOJ ' + idxb + ' ' + pageb);
             const arr = [];
             $('.problem_list tr').each(function(idx) {
                 const obj = {
@@ -391,10 +392,7 @@ const b = new Crawler({
             });
 
             for(let i = 0; i < arr.length; i++) {
-                model.outProblem.create(arr[i]).then(result => {}).catch(err => {});
-                model.outProblem.findOneAndUpdate({problem_number: arr[i].problem_number},
-                    {$set: {problem_rating: arr[i].problem_rating,
-                            problem_solver: arr[i].problem_solver}}).then(result => {}).catch(err => {});
+                queueing(arr[i]).catch(err => {console.log(err)});
             }
 
             funboj(b, b_category).catch(err => {console.log(err)});
@@ -405,9 +403,12 @@ const b = new Crawler({
 
 
 db.once('open', () => {
+    qidx = 0;
+    queue.splice(0, queue.length);
+
+    counter = 0;
     pageb = 100;
     idxb = -1;
-    counter = 0;
     funboj(b).catch(err => {
         console.log(err);
     });
@@ -423,22 +424,21 @@ db.once('open', () => {
     });
 
     setInterval(() => {
+        qidx = 0;
+        queue.splice(0, queue.length);
+
+        counter = 0;
         pageb = 100;
         idxb = -1;
-        counter = 0;
         funboj(b).catch(err => {
             console.log(err);
         });
-    }, 86400000);
 
-    setInterval(() => {
         idxs = -1;
         funspoj(s).catch(err => {
             console.log(err);
         });
-    }, 86400000);
 
-    setInterval(() => {
         idxc = 0;
         funcodeforces(c).catch(err => {
             console.log(err);
