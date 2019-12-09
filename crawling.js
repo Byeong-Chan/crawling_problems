@@ -23,19 +23,35 @@ const insertMongo = async function() {
         if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
     }).catch(err => {
         console.log(err);
-        model.outProblem.updateOne({problem_number: obj.problem_number},
-            {
-                $set: {
-                    problem_solver: obj.problem_solver,
-                    problem_rating: obj.problem_rating,
-                    Category: obj.Category
-                }
-            }).then(result=> {
-            if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
-        }).catch(err =>{
-            console.log(err);
-            if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
-        })
+        if(obj.problem_rating !== 0) {
+            model.outProblem.updateOne({problem_number: obj.problem_number},
+                {
+                    $set: {
+                        problem_solver: obj.problem_solver,
+                        problem_rating: obj.problem_rating,
+                        Category: obj.Category
+                    }
+                }).then(result=> {
+                if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
+            }).catch(err =>{
+                console.log(err);
+                if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
+            });
+        }
+        else {
+            model.outProblem.updateOne({problem_number: obj.problem_number},
+                {
+                    $set: {
+                        problem_solver: obj.problem_solver,
+                        Category: obj.Category
+                    }
+                }).then(result=> {
+                if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
+            }).catch(err =>{
+                console.log(err);
+                if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
+            });
+        }
     })
 };
 
