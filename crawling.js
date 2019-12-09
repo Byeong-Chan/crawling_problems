@@ -405,6 +405,23 @@ const b = new Crawler({
 
 
 db.once('open', () => {
+    pageb = 100;
+    idxb = -1;
+    counter = 0;
+    funboj(b).catch(err => {
+        console.log(err);
+    });
+
+    idxs = -1;
+    funspoj(s).catch(err => {
+        console.log(err);
+    });
+
+    idxc = 0;
+    funcodeforces(c).catch(err => {
+        console.log(err);
+    });
+
     setInterval(() => {
         pageb = 100;
         idxb = -1;
