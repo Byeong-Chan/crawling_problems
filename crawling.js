@@ -28,8 +28,10 @@ const insertMongo = async function() {
                 {
                     $set: {
                         problem_solver: obj.problem_solver,
-                        problem_rating: obj.problem_rating,
-                        Category: obj.Category
+                        problem_rating: obj.problem_rating
+                    },
+                    $addToSet: {
+                        Category: {$each: obj.Category}
                     }
                 }).then(result=> {
                 if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
@@ -42,8 +44,10 @@ const insertMongo = async function() {
             model.outProblem.updateOne({problem_number: obj.problem_number},
                 {
                     $set: {
-                        problem_solver: obj.problem_solver,
-                        Category: obj.Category
+                        problem_solver: obj.problem_solver
+                    },
+                    $addToSet: {
+                        Category: {$each: obj.Category}
                     }
                 }).then(result=> {
                 if(qidx < queue.length) insertMongo().catch(err=>{console.log(err)});
