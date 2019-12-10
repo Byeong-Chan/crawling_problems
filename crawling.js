@@ -333,6 +333,7 @@ const b_category = new Crawler({
                         problem_rating: 0,
                         Category: []
                     };
+                    obj.Category.push(category_name);
                     const keys = ["problem_number", "name", "problem_solver"];
                     $(this).find('td').each(function(idx) {
                         obj[keys[idx]] = $(this).text().trim();
